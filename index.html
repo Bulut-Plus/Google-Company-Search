@@ -99,6 +99,7 @@
           lastLocation: null,
           nextPageToken: null,
           loading: false,
+          pageSize: 100,
         };
       },
       methods: {
@@ -161,7 +162,7 @@
         async fetchAllResults(lat, lng, keyword) {
           do {
             await this.searchPlaces(lat, lng, keyword, this.nextPageToken);
-            if (this.results.length >= 100) break;
+            if (this.results.length >= this.pageSize) break;
           } while (this.nextPageToken);
         },
         async searchPlaces(lat, lng, keyword, token = null) {
@@ -206,6 +207,7 @@
           });
         },
         async fetchNextPage() {
+          this.pageSize = this.pageSize + 120
           if (this.nextPageToken) {
             this.loading = true;
             await this.fetchAllResults(
@@ -218,10 +220,9 @@
           }
         },
         paginateResults() {
-          const pageSize = 120;
           this.pagedResults = [];
-          for (let i = 0; i < this.results.length; i += pageSize) {
-            this.pagedResults.push(this.results.slice(i, i + pageSize));
+          for (let i = 0; i < this.results.length; i += this.pageSize) {
+            this.pagedResults.push(this.results.slice(i, i + this.pageSize));
           }
         },
         downloadExcel() {
