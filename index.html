@@ -64,7 +64,6 @@
         <!-- Sonuçlar ve Download -->
         <div v-if="results.length > 0">
           <v-row justify="center" class="mb-4">
-            <v-btn :disabled="!nextPageToken" @click="fetchNextPage" class="mr-4">Sonraki</v-btn>
             <v-btn color="success" @click="downloadExcel">Excel'e İndir</v-btn>
           </v-row>
           <v-row>
@@ -160,11 +159,6 @@
           });
         },
         async fetchAllResults(lat, lng, keyword) {
-          console.log("page size: ", this.pageSize)
-          console.log("result: ", this.results.length);
-          console.log("pageToken: ", this.nextPageToken);
-          
-          
           do {
             await this.searchPlaces(lat, lng, keyword, this.nextPageToken);
             if (this.results.length >= this.pageSize) break;
@@ -228,8 +222,6 @@
           this.pagedResults = [];
           
           for (let i = 0; i < this.results.length; i += this.pageSize) {
-            console.log("PAGEE");
-            
             this.pagedResults.push(this.results.slice(i, i + this.pageSize));
           }
         },
