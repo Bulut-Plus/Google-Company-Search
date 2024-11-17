@@ -160,6 +160,9 @@
           });
         },
         async fetchAllResults(lat, lng, keyword) {
+          console.log("page size: ", this.pageSize)
+          console.log("result: ", this.results.length);
+          
           do {
             await this.searchPlaces(lat, lng, keyword, this.nextPageToken);
             if (this.results.length >= this.pageSize) break;
