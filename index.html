@@ -205,13 +205,76 @@
           const response = await fetch(apiUrl);
           const data = await response.json();
           if (data.length === 0) return null;
-          return {
-            lat: parseFloat(data[0].lat),
-            lng: parseFloat(data[0].lon),
-          };
+          const { lat, lon} = data[0];
+          this.lastLocation = { lat, lng: lon };
+          return { lat, lng: lon };
         },
         async fetchAllResults(lat, lng, keyword) {
-          // Your Google Places API or similar logic here
+          do {
+            await this.searchPlaces(lat, lng, keyword, this.nextPageToken);
+            if (this.results.length >= this.pageSize) break;
+          } while (this.nextPageToken);
+        },
+        async searchPlaces(lat, lng, keyword, token = null) {
+          const service = new google.maps.places.PlacesService(document.createElement("div"));
+          const request = token
+            ? { pageToken: token, location: new google.maps.LatLng(lat, lng), radius: 5000, keyword }
+            : { location: new google.maps.LatLng(lat, lng), radius: 5000, keyword };
+
+          return new Promise((resolve) => {
+            service.nearbySearch(request, async (results, status, pagination) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK) {
+                const detailedResults = [];
+                for (const place of results) {
+                  const details = await this.getPlaceDetails(place.place_id);
+                  if (details && !details.website) {
+                    detailedResults.push({
+                      name: place.name,
+                      address: place.vicinity,
+                      rating: place.rating || "Puanlanmamış",
+                      location: {
+                        lat: place.geometry.location.lat(),
+                        lng: place.geometry.location.lng(),
+                      },
+                    });
+                  }
+                }
+                this.results = this.results.concat(detailedResults);
+                this.nextPageToken = pagination && pagination.hasNextPage ? pagination.Sp : null;
+              } else {
+                this.nextPageToken = null;
+              }
+              resolve();
+            });
+          });
+        },
+        async getPlaceDetails(placeId) {
+          const service = new google.maps.places.PlacesService(document.createElement("div"));
+          return new Promise((resolve) => {
+            service.getDetails({ placeId }, (place, status) => {
+              resolve(status === google.maps.places.PlacesServiceStatus.OK ? place : null);
+            });
+          });
+        },
+        async fetchNextPage() {
+          this.pageSize = this.pageSize + 120
+          if (this.nextPageToken) {
+            this.loading = true;
+            await this.fetchAllResults(
+              this.lastLocation.lat,
+              this.lastLocation.lng,
+              this.category
+            );
+            this.paginateResults();
+            this.loading = false;
+          }
+        },
+        paginateResults() {
+          this.pagedResults = [];
+          
+          for (let i = 0; i < this.results.length; i += this.pageSize) {
+            this.pagedResults.push(this.results.slice(i, i + this.pageSize));
+          }
         },
         downloadExcel() {
           const worksheet = XLSX.utils.json_to_sheet(this.results);
