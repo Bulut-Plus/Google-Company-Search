@@ -202,31 +202,31 @@
           });
         },
         async getPlaceDetails(placeId) {
-  const service = new google.maps.places.PlacesService(document.createElement("div"));
-  return new Promise((resolve) => {
-    service.getDetails(
-      {
-        placeId,
-        fields: [
-          "name",
-          "vicinity",
-          "geometry",
-          "international_phone_number",
-          "formatted_phone_number",
-          "website",
-          "rating",
-        ],
-      },
-      (place, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK) {
-          resolve(place);
-        } else {
-          resolve(null); // Eğer bir hata oluşursa null döndür
-        }
-      }
-    );
-  });
-},
+          const service = new google.maps.places.PlacesService(document.createElement("div"));
+          return new Promise((resolve) => {
+            service.getDetails(
+              {
+                placeId,
+                fields: [
+                  "name",
+                  "vicinity",
+                  "geometry",
+                  "international_phone_number",
+                  "formatted_phone_number",
+                  "website",
+                  "rating",
+                ],
+              },
+              (place, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                  resolve(place);
+                } else {
+                  resolve(null); // Eğer bir hata oluşursa null döndür
+                }
+              }
+            );
+          });
+        },
         async fetchNextPage() {
           this.pageSize = this.pageSize + 120
           if (this.nextPageToken) {
@@ -242,12 +242,20 @@
         },
         paginateResults() {
           this.pagedResults = [];
-          
           for (let i = 0; i < this.results.length; i += this.pageSize) {
             this.pagedResults.push(this.results.slice(i, i + this.pageSize));
           }
         },
         downloadExcel() {
+          const excelData = this.results.map((result)=> {
+            return {
+              "Firma Adı": result.name,
+              "Adres": result.address || "Adres bilgisi yok",
+              "Puan": result.rating || "Puanlanmamış",
+              "Konum": `${result.location.lat}, ${result.location.lng}`,
+              "Telefon": result.phoneNumber,
+            };
+          })
           const worksheet = XLSX.utils.json_to_sheet(this.results);
           const workbook = XLSX.utils.book_new();
           XLSX.utils.book_append_sheet(workbook, worksheet, "Sonuçlar");
