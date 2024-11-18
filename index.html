@@ -206,7 +206,7 @@
         async getPlaceDetails(placeId) {
           const service = new google.maps.places.PlacesService(document.createElement("div"));
           return new Promise((resolve) => {
-            service.getDetails({ placeId }, (place, status) => {
+            service.getDetails({ placeId, fields: ['name', 'vicinity', 'geometry', 'international_phone_number', 'formatted_phone_number', 'website', 'rating'] }, (place, status) => {
               resolve(status === google.maps.places.PlacesServiceStatus.OK ? place : null);
             });
           });
