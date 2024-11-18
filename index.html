@@ -145,8 +145,8 @@
             this.loading = false;
           }
         },
-        async getCoordinates(address) {
-          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${district},${province}`;
+        async getCoordinates() {
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${this.selectedDistrict},${this.selectedProvince}`;
           const response = await fetch(url);
           const data = await response.json();
     
