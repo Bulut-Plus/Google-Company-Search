@@ -74,7 +74,7 @@
                   <strong>Adres:</strong> {{ result.address || "Adres bilgisi yok" }} <br>
                   <strong>Puan:</strong> {{ result.rating || "Puanlanmamış" }} <br>
                   <strong>Konum:</strong> {{ result.location.lat }}, {{ result.location.lng }}
-                  <strong>Telefon:</strong> {{ international_phone_number || formatted_phone_number }}
+                  <strong>Telefon:</strong> {{ phoneNumber }}
                 </v-card-text>
               </v-card>
             </v-col>
@@ -182,6 +182,7 @@
                       name: place.name,
                       address: place.vicinity,
                       rating: place.rating || "Puanlanmamış",
+                      phoneNumber: place.international_phone_number || place.formatted_phone_number
                       location: {
                         lat: place.geometry.location.lat(),
                         lng: place.geometry.location.lng(),
