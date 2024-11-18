@@ -74,6 +74,7 @@
                   <strong>Adres:</strong> {{ result.address || "Adres bilgisi yok" }} <br>
                   <strong>Puan:</strong> {{ result.rating || "Puanlanmamış" }} <br>
                   <strong>Konum:</strong> {{ result.location.lat }}, {{ result.location.lng }}
+                  <strong>Telefon:</strong> {{ international_phone_number || formatted_phone_number }}
                 </v-card-text>
               </v-card>
             </v-col>
