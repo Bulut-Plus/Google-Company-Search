@@ -182,15 +182,19 @@
                       name: place.name,
                       address: place.vicinity,
                       rating: place.rating || "Puanlanmamış",
-                      phoneNumber: place.international_phone_number || place.formatted_phone_number,
+                      phoneNumber: place.international_phone_number || place.formatted_phone_number,
                       location: {
                         lat: place.geometry.location.lat(),
                         lng: place.geometry.location.lng(),
                       },
                     });
+                    console.log(place);
+                    
                   }
                 }
                 this.results = this.results.concat(detailedResults);
+                console.log(this.results);
+                
                 this.nextPageToken = pagination && pagination.hasNextPage ? pagination.Sp : null;
               } else {
                 this.nextPageToken = null;
