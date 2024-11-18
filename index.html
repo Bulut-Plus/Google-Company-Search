@@ -199,7 +199,7 @@
         async getCoordinates(address) {
           const apiUrl =
             this.searchEngine === "LocationIQ"
-              ? `https://us1.locationiq.com/v1/search.php?key=YOUR_LOCATIONIQ_KEY&q=${address}&format=json`
+              ? `https://us1.locationiq.com/v1/search.php?key=pk.7f33e3496fb86f1131f02c76ca3e380e&q=${address}&format=json`
               : `https://nominatim.openstreetmap.org/search?format=json&q=${address}`;
 
           const response = await fetch(apiUrl);
