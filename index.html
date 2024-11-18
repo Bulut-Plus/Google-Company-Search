@@ -151,9 +151,11 @@
           const data = await response.json();
     
           if (data.length === 0) return null;
-          const  {lat , lon} = data[0]
+          const  { boundingbox } = data[0]
+          const lat = boundingbox[0]
+          const lng = boundingbox[2]
 
-          return { lat, lng: lon }
+          return { lat, lng }
         },
         async fetchAllResults(lat, lng, keyword) {
           do {
