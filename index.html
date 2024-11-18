@@ -152,8 +152,8 @@
     
           if (data.length === 0) return null;
           const  { boundingbox } = data[0]
-          const lat = boundingbox[0]
-          const lng = boundingbox[2]
+          const lat = boundingbox[1]
+          const lng = boundingbox[3]
 
           return { lat, lng }
         },
