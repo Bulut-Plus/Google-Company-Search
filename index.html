@@ -146,7 +146,8 @@
           }
         },
         async getCoordinates() {
-          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${this.selectedDistrict},${this.selectedProvince}`;
+          const url = `https://us1.locationiq.com/v1/search.php?key=pk.7f33e3496fb86f1131f02c76ca3e380e&q=${this.selectedDistrict},${this.selectedProvince}&format=json`
+          //const url = `https://nominatim.openstreetmap.org/search?format=json&q=${this.selectedDistrict},${this.selectedProvince}`;
           const response = await fetch(url);
           const data = await response.json();
     
