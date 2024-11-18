@@ -151,9 +151,7 @@
           const data = await response.json();
     
           if (data.length === 0) return null;
-          const  { boundingbox } = data[0]
-          const lat = boundingbox[1]
-          const lng = boundingbox[3]
+          const {lat, lon: lng} = data[0]
 
           return { lat, lng }
         },
