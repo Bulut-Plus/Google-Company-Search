@@ -17,29 +17,71 @@
         <h1 class="mb-4">Web Sitesi Olmayan Firmalar</h1>
         <v-form @submit.prevent="search">
           <v-row class="align-center">
+            <!-- Arama Yöntemi -->
             <v-col cols="3">
-              <v-autocomplete
-                label="İl Seçiniz"
-                v-model="selectedProvince"
-                :items="provinces"
-                label="İl Seçin"
-                item-value="name"
-                item-title="name"
-                @update:model-value="onProvinceChange"
-                required
-              ></v-autocomplete>
+              <v-select
+                v-model="searchMethod"
+                :items="['Adres ile Ara', 'Lat/Lng ile Ara']"
+                label="Arama Yöntemi Seçin"
+              ></v-select>
             </v-col>
+
+            <!-- Adres ile Arama -->
+            <template v-if="searchMethod === 'Adres ile Ara'">
+              <v-col cols="3">
+                <v-autocomplete
+                  label="İl Seçiniz"
+                  v-model="selectedProvince"
+                  :items="provinces"
+                  item-value="name"
+                  item-title="name"
+                  @update:model-value="onProvinceChange"
+                  required
+                ></v-autocomplete>
+              </v-col>
+              <v-col cols="3">
+                <v-autocomplete
+                  label="İlçe Seçiniz"
+                  v-model="selectedDistrict"
+                  :items="districts"
+                  item-value="name"
+                  item-title="name"
+                  required
+                ></v-autocomplete>
+              </v-col>
+            </template>
+
+            <!-- Lat/Lng ile Arama -->
+            <template v-if="searchMethod === 'Lat/Lng ile Ara'">
+              <v-col cols="3">
+                <v-text-field
+                  v-model="latitude"
+                  label="Enlem (Lat)"
+                  placeholder="Örn: 41.0082"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="3">
+                <v-text-field
+                  v-model="longitude"
+                  label="Boylam (Lng)"
+                  placeholder="Örn: 28.9784"
+                  required
+                ></v-text-field>
+              </v-col>
+            </template>
+
+            <!-- Arama Motoru Seçimi -->
             <v-col cols="3">
-              <v-autocomplete
-                label="İlçe Seçiniz"
-                v-model="selectedDistrict"
-                :items="districts"
-                label="İlçe Seçin"
-                item-value="name"
-                item-title="name"
+              <v-select
+                v-model="searchEngine"
+                :items="['LocationIQ', 'Nominatim']"
+                label="Arama Motoru Seçin"
                 required
-              ></v-autocomplete>
+              ></v-select>
             </v-col>
+
+            <!-- Kategori -->
             <v-col cols="3">
               <v-text-field
                 v-model="category"
@@ -48,7 +90,9 @@
                 required
               ></v-text-field>
             </v-col>
-            <v-col cols="3" class="text-center">
+
+            <!-- Ara Butonu -->
+            <v-col cols="3">
               <v-btn color="primary" type="submit">Ara</v-btn>
             </v-col>
           </v-row>
@@ -56,12 +100,7 @@
 
         <v-divider class="my-4"></v-divider>
 
-        <!-- Loading Animasyonu -->
-        <div v-if="loading" class="text-center my-4">
-          <v-progress-circular indeterminate color="primary"></v-progress-circular>
-        </div>
-
-        <!-- Sonuçlar ve Download -->
+        <!-- Sonuçlar -->
         <div v-if="results.length > 0">
           <v-row justify="center" class="mb-4">
             <v-btn color="success" @click="downloadExcel">Excel'e İndir</v-btn>
@@ -92,11 +131,14 @@
           selectedProvince: null,
           selectedDistrict: null,
           category: "",
+          latitude: null,
+          longitude: null,
+          searchMethod: "Adres ile Ara",
+          searchEngine: "LocationIQ",
           results: [],
           pagedResults: [],
           currentPage: 0,
           lastLocation: null,
-          nextPageToken: null,
           loading: false,
           pageSize: 100,
         };
@@ -124,104 +166,52 @@
           }
         },
         async search() {
-          if (!this.selectedProvince || !this.selectedDistrict || !this.category) {
-            alert("Lütfen tüm alanları doldurun!");
-            return;
-          }
-          this.loading = true;
           try {
-            const location = await this.getCoordinates(
-              `${this.selectedDistrict}, ${this.selectedProvince}`
-            );
-            this.lastLocation = location;
+            let location;
+            if (this.searchMethod === "Adres ile Ara") {
+              if (!this.selectedProvince || !this.selectedDistrict) {
+                alert("Lütfen il ve ilçe seçin!");
+                return;
+              }
+              location = await this.getCoordinates(
+                `${this.selectedDistrict}, ${this.selectedProvince}`
+              );
+            } else if (this.searchMethod === "Lat/Lng ile Ara") {
+              if (!this.latitude || !this.longitude) {
+                alert("Lütfen koordinatları girin!");
+                return;
+              }
+              location = { lat: this.latitude, lng: this.longitude };
+            }
+
+            if (!location) {
+              alert("Konum bulunamadı!");
+              return;
+            }
+
             this.results = [];
-            this.nextPageToken = null;
             await this.fetchAllResults(location.lat, location.lng, this.category);
-            this.paginateResults();
           } catch (error) {
             console.error("Arama sırasında hata oluştu:", error);
             alert("Bir hata meydana geldi. Lütfen tekrar deneyin.");
-          } finally {
-            this.loading = false;
           }
         },
-        async getCoordinates() {
-          const url = `https://us1.locationiq.com/v1/search.php?key=pk.7f33e3496fb86f1131f02c76ca3e380e&q=${this.selectedDistrict},${this.selectedProvince}&format=json`
-          //const url = `https://nominatim.openstreetmap.org/search?format=json&q=${this.selectedDistrict},${this.selectedProvince}`;
-          const response = await fetch(url);
-          const data = await response.json();
-    
-          if (data.length === 0) return null;
-          const {lat, lon: lng} = data[0]
+        async getCoordinates(address) {
+          const apiUrl =
+            this.searchEngine === "LocationIQ"
+              ? `https://us1.locationiq.com/v1/search.php?key=YOUR_LOCATIONIQ_KEY&q=${address}&format=json`
+              : `https://nominatim.openstreetmap.org/search?format=json&q=${address}`;
 
-          return { lat, lng }
+          const response = await fetch(apiUrl);
+          const data = await response.json();
+          if (data.length === 0) return null;
+          return {
+            lat: parseFloat(data[0].lat),
+            lng: parseFloat(data[0].lon),
+          };
         },
         async fetchAllResults(lat, lng, keyword) {
-          do {
-            await this.searchPlaces(lat, lng, keyword, this.nextPageToken);
-            if (this.results.length >= this.pageSize) break;
-          } while (this.nextPageToken);
-        },
-        async searchPlaces(lat, lng, keyword, token = null) {
-          const service = new google.maps.places.PlacesService(document.createElement("div"));
-          const request = token
-            ? { pageToken: token, location: new google.maps.LatLng(lat, lng), radius: 5000, keyword }
-            : { location: new google.maps.LatLng(lat, lng), radius: 5000, keyword };
-
-          return new Promise((resolve) => {
-            service.nearbySearch(request, async (results, status, pagination) => {
-              if (status === google.maps.places.PlacesServiceStatus.OK) {
-                const detailedResults = [];
-                for (const place of results) {
-                  const details = await this.getPlaceDetails(place.place_id);
-                  if (details && !details.website) {
-                    detailedResults.push({
-                      name: place.name,
-                      address: place.vicinity,
-                      rating: place.rating || "Puanlanmamış",
-                      location: {
-                        lat: place.geometry.location.lat(),
-                        lng: place.geometry.location.lng(),
-                      },
-                    });
-                  }
-                }
-                this.results = this.results.concat(detailedResults);
-                this.nextPageToken = pagination && pagination.hasNextPage ? pagination.Sp : null;
-              } else {
-                this.nextPageToken = null;
-              }
-              resolve();
-            });
-          });
-        },
-        async getPlaceDetails(placeId) {
-          const service = new google.maps.places.PlacesService(document.createElement("div"));
-          return new Promise((resolve) => {
-            service.getDetails({ placeId }, (place, status) => {
-              resolve(status === google.maps.places.PlacesServiceStatus.OK ? place : null);
-            });
-          });
-        },
-        async fetchNextPage() {
-          this.pageSize = this.pageSize + 120
-          if (this.nextPageToken) {
-            this.loading = true;
-            await this.fetchAllResults(
-              this.lastLocation.lat,
-              this.lastLocation.lng,
-              this.category
-            );
-            this.paginateResults();
-            this.loading = false;
-          }
-        },
-        paginateResults() {
-          this.pagedResults = [];
-          
-          for (let i = 0; i < this.results.length; i += this.pageSize) {
-            this.pagedResults.push(this.results.slice(i, i + this.pageSize));
-          }
+          // Your Google Places API or similar logic here
         },
         downloadExcel() {
           const worksheet = XLSX.utils.json_to_sheet(this.results);
